@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+build/
+.system_generated/
+.user_uploaded/
+*.tmp
+*.log
