@@ -9,7 +9,7 @@ class DiskBenchmark:
     def __init__(self, target_dir: str, file_size_mb: int = 1024):
         self.target_dir = target_dir
         self.file_size_bytes = file_size_mb * 1024 * 1024
-        self.test_file_path = os.path.join(target_dir, f".disc_analyzer_bench_{os.getpid()}.tmp")
+        self.test_file_path = os.path.join(target_dir, f".disk_analyzer_bench_{os.getpid()}.tmp")
         self.is_cancelled = False
 
     def cancel(self):

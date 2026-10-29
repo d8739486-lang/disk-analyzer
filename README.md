@@ -1,4 +1,4 @@
-# 🖴 Disc Analyzer (Linux GTK3)
+# 🖴 Disk Analyzer (Linux GTK3)
 
 Современная, быстрая и нативная утилита для комплексного анализа накопителей на Linux (Linux Mint, Ubuntu, Debian и других дистрибутивах).
 
@@ -34,15 +34,15 @@
 
 ### Вариант 1. Установка через `.deb` пакет (Рекомендуется)
 
-Скачайте файл `disc-analyzer_1.0.0_all.deb` из [Releases](../../releases) и установите:
+Скачайте файл `disk-analyzer_1.0.0_all.deb` из [Releases](../../releases) и установите:
 ```bash
-sudo dpkg -i disc-analyzer_1.0.0_all.deb
+sudo dpkg -i disk-analyzer_1.0.0_all.deb
 ```
-После этого ярлык приложения появится в меню приложений в категории «Система», а запускать можно командой `disc-analyzer`.
+После этого ярлык приложения появится в меню приложений в категории «Система», а запускать можно командой `disk-analyzer`.
 
 ### Вариант 2. Запуск готового бинарника (ZipApp)
 ```bash
-./disc-analyzer.bin
+./disk-analyzer.bin
 ```
 
 ### Вариант 3. Запуск из исходного кода

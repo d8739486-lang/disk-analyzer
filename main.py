@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Linux Disc Analyzer entry point."""
+"""Linux Disk Analyzer entry point."""
 import sys
 import os
 import signal

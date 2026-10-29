@@ -237,7 +237,7 @@ class BenchmarkTab(Gtk.Box):
         self.pack_start(grid_cards, True, True, 0)
 
         # 4. Dismissible persistent tip box
-        config_dir = os.path.expanduser("~/.config/disc-analyzer")
+        config_dir = os.path.expanduser("~/.config/disk-analyzer")
         self.tip_hide_file = os.path.join(config_dir, "hide_bench_tip")
 
         if not os.path.exists(self.tip_hide_file):

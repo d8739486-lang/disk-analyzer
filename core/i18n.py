@@ -1,10 +1,10 @@
-"""Internationalization (i18n) module for Disc Analyzer supporting Russian, English, and system locale."""
+"""Internationalization (i18n) module for Disk Analyzer supporting Russian, English, and system locale."""
 import os
 import locale
 
 TRANSLATIONS = {
     "ru": {
-        "app_title": "Disc Analyzer",
+        "app_title": "Disk Analyzer",
         "app_subtitle": "Мониторинг накопителей • Анализ памяти • Скорость диска",
         "tab_smart": "Накопители & S.M.A.R.T.",
         "tab_usage": "Анализ занятого места",
@@ -46,7 +46,7 @@ TRANSLATIONS = {
         "total": "Всего",
     },
     "en": {
-        "app_title": "Disc Analyzer",
+        "app_title": "Disk Analyzer",
         "app_subtitle": "Storage Drive Monitor • Disk Space • Speed Benchmark",
         "tab_smart": "Drives & S.M.A.R.T.",
         "tab_usage": "Disk Space Usage",

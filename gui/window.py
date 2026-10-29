@@ -16,10 +16,10 @@ from gui.ui_utils import get_svg_image
 
 class MainWindow(Gtk.Window):
     def __init__(self):
-        super().__init__(title="Disc Analyzer")
-        self.set_wmclass("disc-analyzer", "disc-analyzer")
-        self.set_role("disc-analyzer")
-        Gtk.Window.set_default_icon_name("disc-analyzer")
+        super().__init__(title="Disk Analyzer")
+        self.set_wmclass("disk-analyzer", "disk-analyzer")
+        self.set_role("disk-analyzer")
+        Gtk.Window.set_default_icon_name("disk-analyzer")
 
         # Load multi-resolution application icons (both standalone & zipapp support)
         pixbufs = self._load_app_icons()
@@ -111,7 +111,7 @@ class MainWindow(Gtk.Window):
 
     def _build_ui(self):
         # Native window title and subtitle
-        self.set_title("Disc Analyzer")
+        self.set_title("Disk Analyzer")
 
         # Main vertical container
         main_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
@@ -165,6 +165,7 @@ class MainWindow(Gtk.Window):
                 for s in sizes:
                     candidates = [
                         os.path.join(base_dir, f"icon_{s}x{s}.png"),
+                        os.path.join(base_dir, f"{s}x{s}", "apps", "disk-analyzer.png"),
                         os.path.join(base_dir, f"{s}x{s}", "apps", "disc-analyzer.png")
                     ]
                     for fpath in candidates:
@@ -181,6 +182,7 @@ class MainWindow(Gtk.Window):
         for zip_candidate in [
             getattr(self, "_zipapp_path", None),
             os.environ.get("AGY_APP_BIN"),
+            os.path.join(os.getcwd(), "disk-analyzer.bin"),
             os.path.join(os.getcwd(), "disc-analyzer.bin"),
             os.path.abspath(__file__).split(".bin/")[0] + ".bin" if ".bin/" in os.path.abspath(__file__) else None
         ]:
