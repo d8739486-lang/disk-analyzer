@@ -10,13 +10,15 @@ echo "==> Сборка автономного исполняемого паке�
 python3 -c '
 import os, shutil, zipapp
 b = "build/bundle"
+src = "source-code"
 if os.path.exists(b): shutil.rmtree(b)
 os.makedirs(b, exist_ok=True)
 for d in ["core", "gui", "assets"]:
-    if os.path.exists(d):
-        shutil.copytree(d, os.path.join(b, d), ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
-shutil.copy("main.py", os.path.join(b, "__main__.py"))
-shutil.copy("main.py", os.path.join(b, "main.py"))
+    p = os.path.join(src, d)
+    if os.path.exists(p):
+        shutil.copytree(p, os.path.join(b, d), ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+shutil.copy(os.path.join(src, "main.py"), os.path.join(b, "__main__.py"))
+shutil.copy(os.path.join(src, "main.py"), os.path.join(b, "main.py"))
 zipapp.create_archive(b, "disk-analyzer.bin", interpreter="/usr/bin/env python3")
 os.chmod("disk-analyzer.bin", 0o755)
 '
@@ -31,7 +33,7 @@ mkdir -p "$PKG_DIR/usr/share/icons/hicolor/256x256/apps"
 cp disk-analyzer.bin "$PKG_DIR/usr/bin/$APP_NAME"
 chmod 755 "$PKG_DIR/usr/bin/$APP_NAME"
 
-cp assets/icons/icon_256x256.png "$PKG_DIR/usr/share/icons/hicolor/256x256/apps/$APP_NAME.png"
+cp source-code/assets/icons/icon_256x256.png "$PKG_DIR/usr/share/icons/hicolor/256x256/apps/$APP_NAME.png"
 
 cat << "EOF" > "$PKG_DIR/usr/share/applications/$APP_NAME.desktop"
 [Desktop Entry]
