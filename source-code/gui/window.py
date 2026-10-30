@@ -11,6 +11,8 @@ from gui.tab_smart import SmartTab
 from gui.tab_usage import UsageTab
 from gui.tab_benchmark import BenchmarkTab
 from gui.tab_map import MapTab
+from gui.tab_settings import SettingsTab
+from core.i18n import t
 from gui.ui_utils import get_svg_image
 
 
@@ -132,22 +134,34 @@ class MainWindow(Gtk.Window):
 
         # Tab 1: Drives & S.M.A.R.T.
         self.tab_smart = SmartTab()
-        self.stack.add_titled(self.tab_smart, "tab_smart", "Накопители & S.M.A.R.T.")
+        self.stack.add_titled(self.tab_smart, "tab_smart", t("tab_smart"))
 
         # Tab 2: Space Analyzer (Read-Only)
         self.tab_usage = UsageTab()
-        self.stack.add_titled(self.tab_usage, "tab_usage", "Анализ занятого места")
+        self.stack.add_titled(self.tab_usage, "tab_usage", t("tab_usage"))
 
         # Tab 3: Speed Benchmark (Speedtest.net style)
         self.tab_benchmark = BenchmarkTab()
-        self.stack.add_titled(self.tab_benchmark, "tab_bench", "Тест скорости (Benchmark)")
+        self.stack.add_titled(self.tab_benchmark, "tab_bench", t("tab_bench"))
 
         # Tab 4: Map & Bad Sector Verification (WinDirStat Treemap + Victoria Grid)
         self.tab_map = MapTab()
-        self.stack.add_titled(self.tab_map, "tab_map", "Карта блоков & Проверка")
+        self.stack.add_titled(self.tab_map, "tab_map", t("tab_map"))
+
+        # Tab 5: Settings (Language, defaults, preferences)
+        self.tab_settings = SettingsTab(main_window=self)
+        self.stack.add_titled(self.tab_settings, "tab_settings", t("tab_settings"))
 
         main_vbox.pack_start(self.stack, True, True, 0)
         self.add(main_vbox)
+
+    def retranslate_ui(self):
+        """Update tab headers when user changes language in settings."""
+        self.stack.child_set_property(self.tab_smart, "title", t("tab_smart"))
+        self.stack.child_set_property(self.tab_usage, "title", t("tab_usage"))
+        self.stack.child_set_property(self.tab_benchmark, "title", t("tab_bench"))
+        self.stack.child_set_property(self.tab_map, "title", t("tab_map"))
+        self.stack.child_set_property(self.tab_settings, "title", t("tab_settings"))
 
     def _load_app_icons(self):
         """Robustly load icons whether running from source dir or inside a .bin zipapp."""
