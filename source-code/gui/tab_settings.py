@@ -5,6 +5,7 @@ from gi.repository import Gtk
 from core.i18n import t, get_current_lang, set_current_lang
 from core.config import get_setting, set_setting
 from gui.ui_utils import get_svg_image
+from gui.tab_smart import SmoothSwitch
 
 
 class SettingsTab(Gtk.Box):
@@ -88,9 +89,10 @@ class SettingsTab(Gtk.Box):
         desc_adv.pack_start(lbl_adv_sub, False, False, 0)
         row_adv.pack_start(desc_adv, True, True, 0)
 
-        self.switch_adv_default = Gtk.Switch()
-        self.switch_adv_default.set_active(bool(get_setting("advanced_mode", False)))
-        self.switch_adv_default.connect("notify::active", self._on_adv_switch_changed)
+        self.switch_adv_default = SmoothSwitch(
+            active=bool(get_setting("advanced_mode", False)),
+            on_toggle=self._on_adv_switch_changed
+        )
         row_adv.pack_end(self.switch_adv_default, False, False, 0)
         settings_box.pack_start(row_adv, False, False, 4)
 
@@ -126,5 +128,6 @@ class SettingsTab(Gtk.Box):
         if selected:
             set_setting("benchmark_size_mb", selected)
 
-    def _on_adv_switch_changed(self, switch, gparam):
-        set_setting("advanced_mode", switch.get_active())
+    def _on_adv_switch_changed(self, is_active: bool):
+        set_setting("advanced_mode", is_active)
+

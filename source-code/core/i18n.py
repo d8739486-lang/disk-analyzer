@@ -1,5 +1,5 @@
 """Internationalization (i18n) module for Disk Analyzer.
-Defaults to English with persistent user selection support (English / Russian).
+Full dictionary for English (default) and Russian.
 """
 import os
 from core.config import get_setting, set_setting
@@ -31,7 +31,58 @@ TRANSLATIONS = {
         "smart_col_worst": "Worst",
         "smart_col_thresh": "Thresh",
         "smart_col_val": "Raw Value / Status",
-        
+        "health_good": "Good",
+        "health_warn": "Warning",
+        "health_bad": "Bad / Error",
+        "nvme_fast": "NVMe SSD (High-Speed)",
+        "sata_ssd": "SATA SSD Drive",
+        "hdd_disk": "HDD Hard Drive",
+        "main_nvme": "Primary Storage (NVMe)",
+        "sys_drive": "System Storage",
+        "hours_label": "hours",
+        "days_label": "d.",
+        "power_cycles_label": "power cycles",
+        "shutdowns_label": "power-cut shutdowns",
+        "no_errors": "No errors detected",
+        "errors_count": "errors",
+        "log_clean": "0 (Log is clean)",
+        "log_entries": "entries",
+        "spare_available": "available spare memory",
+        "wear_out": "flash wear-out",
+        "temp_normal": "Operating thermal range",
+        "norm_ok": "Normal (0)",
+        "all_passed": "Healthy (All tests passed)",
+        "warn_wear": "Flash wear / Spare exhausted",
+
+        # SMART attribute names
+        "attr_01": "Overall Hardware Self-Test Status",
+        "attr_02": "Drive Temperature (Controller / Flash)",
+        "attr_03": "Total Power-On Hours",
+        "attr_04": "Critical Controller Warnings",
+        "attr_05": "Available Spare Memory Cells",
+        "attr_06": "Flash Wear Percentage (Percentage Used)",
+        "attr_07": "Total Lifetime Data Read (Host Reads)",
+        "attr_08": "Total Lifetime Data Written (Host Writes)",
+        "attr_09": "Power Cycle Count",
+        "attr_10": "Unsafe Shutdowns (Power Cuts)",
+        "attr_11": "Media and Data Integrity Errors",
+        "attr_12": "Controller Error Log Entries",
+        "attr_13": "Drive Firmware Revision",
+        "attr_14": "Global Device Identifier (WWID / EUI)",
+
+        # Advanced NVMe / Kernel attributes
+        "adv_nvme_rev": "NVMe Express Specification Revision",
+        "adv_nvme_state": "NVMe Controller State",
+        "adv_nvme_cid": "Controller Hardware ID",
+        "adv_nvme_sanitize": "Flash Sanitize Status",
+        "adv_nvme_selftest": "Last Background Self-Test Result",
+        "adv_io_reads": "Completed Read Operations (Read I/O Ops)",
+        "adv_io_writes": "Completed Write Operations (Write I/O Ops)",
+        "adv_io_merged_r": "Merged Read Requests",
+        "adv_io_merged_w": "Merged Write Requests",
+        "adv_io_inflight": "Active In-Flight Requests",
+        "adv_io_time": "Total Active Disk I/O Time",
+
         # Usage tab
         "usage_title": "Disk Space Breakdown",
         "btn_back": "Back",
@@ -45,11 +96,14 @@ TRANSLATIONS = {
         "total": "Total",
         "btn_open_folder": "Open in File Manager",
         "btn_refresh": "Refresh",
+        "tree_title": "Drive Explorer (Tree Structure)",
         "col_name": "Name",
         "col_size": "Size",
+        "col_type": "Type",
         "col_percent": "% of Parent",
         "col_items": "Items",
-        "scan_status_idle": "Select a partition and press 'Analyze Space'",
+        "col_path": "Full Path",
+        "scan_status_idle": "Use arrow ▶ to expand directories or double click to enter.",
         "scan_status_scanning": "Scanning folders and files...",
         "scan_status_done": "Scan completed successfully",
 
@@ -70,16 +124,18 @@ TRANSLATIONS = {
 
         # Map tab
         "mode_treemap": "Disk Space Treemap",
-        "mode_surface": "Sector Surface Verification",
+        "mode_surface": "Sector Surface Verification (Blocks)",
+        "status_blocks": "Block Status",
         "sec_fast": "< 5 ms (Fast):",
         "sec_norm": "< 25 ms (Normal):",
-        "sec_slow": "< 100 ms (Slow):",
-        "sec_vslow": "< 500 ms (Very Slow):",
+        "sec_slow": "< 100 ms (Attention):",
+        "sec_vslow": "< 500 ms (Slow):",
         "sec_bad": "Errors / Bad Blocks:",
         "tested": "Verified:",
         "btn_start_scan": "Start Scan",
         "btn_deep_scan": "Deep Analysis",
         "scan_surface_target": "Storage Drive:",
+        "map_status_ready": "Select mode and target, then click Start to begin scanning.",
 
         # Settings tab
         "settings_title": "Application Preferences",
@@ -120,6 +176,57 @@ TRANSLATIONS = {
         "smart_col_worst": "Худшее",
         "smart_col_thresh": "Порог",
         "smart_col_val": "Значение / Статус",
+        "health_good": "Хорошо",
+        "health_warn": "Внимание",
+        "health_bad": "Ошибка",
+        "nvme_fast": "NVMe SSD (Скоростной)",
+        "sata_ssd": "SSD диск (SATA)",
+        "hdd_disk": "HDD диск (Магнитный)",
+        "main_nvme": "Основной накопитель (NVMe)",
+        "sys_drive": "Системный накопитель",
+        "hours_label": "часов",
+        "days_label": "дн.",
+        "power_cycles_label": "включений",
+        "shutdowns_label": "аварийных отключений",
+        "no_errors": "Ошибок не обнаружено",
+        "errors_count": "ошибок",
+        "log_clean": "0 (Журнал чист)",
+        "log_entries": "записей",
+        "spare_available": "резервных блоков доступно",
+        "wear_out": "износа ресурса памяти",
+        "temp_normal": "Рабочий тепловой диапазон",
+        "norm_ok": "В норме (0)",
+        "all_passed": "Исправен (Все тесты пройдены)",
+        "warn_wear": "Износ ячеек памяти",
+
+        # SMART attribute names
+        "attr_01": "Общий статус аппаратной самодиагностики",
+        "attr_02": "Температура накопителя (Контроллер/Память)",
+        "attr_03": "Общая наработка во включенном состоянии",
+        "attr_04": "Критические предупреждения контроллера",
+        "attr_05": "Доступный резерв ячеек памяти (Available Spare)",
+        "attr_06": "Процент износа ресурса ячеек (Percentage Used)",
+        "attr_07": "Всего прочитано данных за историю накопителя",
+        "attr_08": "Всего записано данных за историю накопителя (Host Writes)",
+        "attr_09": "Количество циклов включения питания (Power Cycles)",
+        "attr_10": "Небезопасные отключения питания (Unsafe Shutdowns)",
+        "attr_11": "Ошибки целостности данных памяти (Media Errors)",
+        "attr_12": "Записи журнала ошибок контроллера (Error Log Entries)",
+        "attr_13": "Версия микропрограммы накопителя (Firmware)",
+        "attr_14": "Глобальный аппаратный идентификатор WWID / EUI",
+
+        # Advanced NVMe / Kernel attributes
+        "adv_nvme_rev": "Ревизия спецификации NVMe Express",
+        "adv_nvme_state": "Состояние контроллера NVMe (State)",
+        "adv_nvme_cid": "Идентификатор контроллера (Controller ID)",
+        "adv_nvme_sanitize": "Статус очистки накопителя (Sanitize Status)",
+        "adv_nvme_selftest": "Результат последнего фонового Selftest",
+        "adv_io_reads": "Выполненные операции чтения (Read I/O Ops)",
+        "adv_io_writes": "Выполненные операции записи (Write I/O Ops)",
+        "adv_io_merged_r": "Объединенные запросы чтения (Merged Read Requests)",
+        "adv_io_merged_w": "Объединенные запросы записи (Merged Write Requests)",
+        "adv_io_inflight": "Запросов в обработке прямо сейчас (In-flight I/O)",
+        "adv_io_time": "Общее активное время дискового ввода-вывода",
 
         # Usage tab
         "usage_title": "Распределение занятого места",
@@ -134,11 +241,14 @@ TRANSLATIONS = {
         "total": "Всего",
         "btn_open_folder": "Открыть в диспетчере файлов",
         "btn_refresh": "Обновить",
+        "tree_title": "Проводник накопителя (Древовидная структура)",
         "col_name": "Имя",
         "col_size": "Размер",
+        "col_type": "Тип",
         "col_percent": "% от родителя",
         "col_items": "Элементов",
-        "scan_status_idle": "Выберите раздел и нажмите «Анализ места»",
+        "col_path": "Полный путь",
+        "scan_status_idle": "Используйте стрелочки ▶ для раскрытия папок на месте или дважды кликните по папке.",
         "scan_status_scanning": "Сканирование файлов и каталогов...",
         "scan_status_done": "Сканирование успешно завершено",
 
@@ -160,6 +270,7 @@ TRANSLATIONS = {
         # Map tab
         "mode_treemap": "Карта занятого места",
         "mode_surface": "Проверка секторов (Блоки)",
+        "status_blocks": "Статус блоков",
         "sec_fast": "< 5 мс (Отлично):",
         "sec_norm": "< 25 мс (Нормально):",
         "sec_slow": "< 100 мс (Внимание):",
@@ -169,6 +280,7 @@ TRANSLATIONS = {
         "btn_start_scan": "Сканировать",
         "btn_deep_scan": "Глубокий анализ",
         "scan_surface_target": "Накопитель:",
+        "map_status_ready": "Выберите режим и нажмите кнопку для запуска сканирования.",
 
         # Settings tab
         "settings_title": "Настройки программы",
@@ -210,7 +322,6 @@ def t(key: str, default: str = "") -> str:
     lang_dict = TRANSLATIONS.get(CURRENT_LANG, TRANSLATIONS["en"])
     if key in lang_dict:
         return lang_dict[key]
-    # Fallback to English dict if missing in current
     if key in TRANSLATIONS["en"]:
         return TRANSLATIONS["en"][key]
     return default or key

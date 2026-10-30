@@ -51,3 +51,4 @@ def set_setting(key: str, value) -> bool:
     settings = get_settings()
     settings[key] = value
     return save_settings(settings)
+

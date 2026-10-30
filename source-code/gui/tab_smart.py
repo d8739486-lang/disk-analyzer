@@ -7,12 +7,14 @@ gi.require_version('GdkPixbuf', '2.0')
 from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
 from core.disk_info import get_block_devices
 from core.smart import get_smart_info
+from core.i18n import t, get_current_lang
 from gui.ui_utils import get_svg_image, get_svg_pixbuf
 
 
 def get_attribute_description(name: str, num: str) -> str:
-    """Human-friendly Russian explanation for SMART and kernel attributes."""
-    smart_dict = {
+    """Human-friendly explanation for SMART and kernel attributes in English or Russian."""
+    is_en = get_current_lang() == "en"
+    smart_dict_ru = {
         "01": "Общий статус аппаратной самодиагностики накопителя (Raw Read Error Rate). PASSED или отсутствие ошибок свидетельствует о стабильности считывания данных с поверхности.",
         "02": "Текущая температура контроллера или ячеек памяти. Оптимальный рабочий диапазон для NVMe SSD — до 65-70°C, для SATA SSD и HDD — до 45°C.",
         "03": "Общее суммарное время наработки накопителя во включенном состоянии (Power-On Hours). Позволяет оценить реальный возраст устройства.",
@@ -27,60 +29,52 @@ def get_attribute_description(name: str, num: str) -> str:
         "12": "Записи журнала ошибок контроллера (Number of Error Information Log Entries). Количество зарегистрированных инцидентов контроллера.",
         "13": "Версия микропрограммы накопителя (Firmware Revision).",
         "14": "Глобальный аппаратный идентификатор накопителя (WWID / EUI-64).",
-        "B8": "Контроль целостности данных при передаче между интерфейсом и кэшем диска (End-to-End Error).",
-        "BB": "Количество сообщений о неисправимых ошибках чтения (Reported Uncorrectable Errors).",
-        "C5": "Количество нестабильных секторов (Current Pending Sector Count), ожидающих повторной проверки или переназначения.",
-        "C6": "Количество неисправимых дефектных секторов (Offline Uncorrectable Sector Count).",
-        "C7": "Ошибки передачи данных по шине SATA / PCIe интерфейса (UltraDMA CRC Error Count). Часто вызваны плохим кабелем или разъёмом.",
-        "E7": "Оставшийся запас надежности ячеек памяти SSD (SSD Life Left / Available Spare) в процентах.",
-        "F1": "Суммарный объем информации, записанной операционной системой за всю историю диска (Total LBAs Written).",
-        "F2": "Суммарный объем информации, считанной операционной системой за всю историю диска (Total LBAs Read).",
     }
+    smart_dict_en = {
+        "01": "Overall hardware self-test diagnostic status (Raw Read Error Rate). PASSED indicates surface integrity and stable flash read capability.",
+        "02": "Current operating temperature of the controller or memory chips. Recommended range for NVMe SSD is below 65-70°C, and under 45°C for SATA/HDD.",
+        "03": "Cumulative power-on time (Power-On Hours). Indicates the operational age and service time of the storage drive.",
+        "04": "Critical warnings counter from hardware controller protection. Zero value confirms healthy error-free hardware state.",
+        "05": "Remaining spare flash blocks (Available Spare). Factory threshold is typically 5-10%. Lower values indicate flash cell exhaustion.",
+        "06": "Percentage of guaranteed TBW endurance consumed (Percentage Used). 0% is factory-fresh, 100% means rated warranty endurance reached.",
+        "07": "Total lifetime data read from the storage device by host systems (Total Host Data Read), read directly from controller registers.",
+        "08": "Total lifetime data written to flash memory (Total Host Data Written).",
+        "09": "Total count of complete hardware power-on cycles (Power Cycle Count).",
+        "10": "Abnormal or emergency shutdowns without flush synchronization (Unsafe Shutdowns).",
+        "11": "Uncorrectable data integrity and flash media read errors (Media and Data Integrity Errors).",
+        "12": "Number of logged hardware error events in controller non-volatile memory (Error Information Log).",
+        "13": "Controller internal firmware revision string (Firmware Revision).",
+        "14": "Globally unique hardware identifier (WWID / EUI-64).",
+    }
+
     clean_num = num.strip().lstrip("0") or "0"
+    smart_dict = smart_dict_en if is_en else smart_dict_ru
     if clean_num in smart_dict:
         return smart_dict[clean_num]
     if num.strip() in smart_dict:
         return smart_dict[num.strip()]
 
     nl = name.lower()
-    if "ревизия спецификации" in nl or "revision" in nl:
-        return "Версия стандарта протокола NVMe Express, которую аппаратно поддерживает контроллер накопителя."
-    if "состояние контроллера" in nl or "state" in nl:
-        return "Текущий статус контроллера NVMe. Состояние 'live' подтверждает полную готовность и работу без сбоев."
-    if "идентификатор контроллера" in nl:
-        return "Аппаратный номер (Controller ID) контроллера на шине PCIe."
-    if "очистки накопителя" in nl or "sanitize" in nl:
-        return "Статус низкоуровневой очистки ячеек памяти (Sanitize). 'never_sanitized' означает, что принудительное полное стирание не выполнялось."
-    if "selftest" in nl or "фонового" in nl:
-        return "Результат последнего аппаратного теста накопителя (Self-test). 'success' подтверждает успешное прохождение всех проверок."
-    if "логического сектора" in nl or "lba" in nl:
-        return "Минимальный адресуемый размер сектора, с которым работает операционная система (обычно 512 байт или 4096 байт)."
-    if "физического сектора" in nl:
-        return "Реальный аппаратный размер физического сектора пластины или страницы флеш-памяти (4096 байт / 4K)."
-    if "планировщик" in nl or "scheduler" in nl:
-        return "Алгоритм ядра Linux для упорядочивания и приоритизации дисковых запросов чтения/записи (none, mq-deadline, bfq)."
-    if "буфер упреждающего чтения" in nl or "read-ahead" in nl:
-        return "Объём данных (в КБ), которые ядро Linux считывает вперед в кэш ОЗУ при последовательном доступе для ускорения чтения."
-    if "кэширования записи" in nl or "write cache" in nl:
-        return "Режим работы внутреннего буфера записи диска (write-back ускоряет запись благодаря энергозависимому буферу контроллера)."
-    if "глубина очереди" in nl or "queue depth" in nl:
-        return "Максимальное количество параллельных дисковых команд ввода-вывода, которые могут одновременно ожидать выполнения."
-    if "тип вращения" in nl or "rotational" in nl:
-        return "Тип устройства: 0 означает твердотельный электронный накопитель SSD/NVMe без механики, 1 — классический жесткий диск с вращающимися пластинами."
-    if "trim" in nl or "discard" in nl:
-        return "Параметр очистки освободившихся блоков памяти TRIM/Discard, позволяющий контроллеру SSD своевременно освобождать ячейки памяти."
-    if "выполненные операции чтения" in nl or "read i/o" in nl:
-        return "Суммарное количество дисковых операций чтения, отправленных ядром Linux на данный диск с момента последней загрузки системы."
-    if "выполненные операции записи" in nl or "write i/o" in nl:
-        return "Суммарное количество дисковых операций записи, отправленных ядром Linux на данный диск с момента последней загрузки системы."
-    if "активное время" in nl or "io_time" in nl:
-        return "Общее время в секундах, в течение которого накопитель активно выполнял операции ввода-вывода с момента включения ПК."
-    if "объединенные запросы" in nl or "merged" in nl:
-        return "Количество смежных запросов ввода-вывода, которые планировщик ядра Linux объединил в одну команду для оптимизации шины."
-    if "запросов в обработке" in nl or "in-flight" in nl:
-        return "Количество дисковых операций, которые контроллер выполняет прямо в текущую долю секунды."
-
-    return "Параметр аппаратной самодиагностики диска или системной телеметрии ядра Linux. Значение отражает текущую надежность и ресурс накопителя."
+    if is_en:
+        if "revision" in nl or "spec" in nl:
+            return "NVMe Express architectural standard version supported by this storage controller."
+        if "state" in nl or "controller" in nl:
+            return "Current operational state of the NVMe controller. 'live' indicates ready and running without faults."
+        if "sanitize" in nl:
+            return "Low-level block erase sanitize state. 'never_sanitized' denotes standard operating mode without purge."
+        if "selftest" in nl:
+            return "Result of last autonomous background self-test diagnostic."
+        return "Hardware self-diagnostic telemetry or Linux kernel block queue parameter."
+    else:
+        if "ревизия" in nl or "revision" in nl:
+            return "Версия стандарта протокола NVMe Express, которую аппаратно поддерживает контроллер накопителя."
+        if "состояние" in nl or "state" in nl:
+            return "Текущий статус контроллера NVMe. Состояние 'live' подтверждает полную готовность и работу без сбоев."
+        if "очистки" in nl or "sanitize" in nl:
+            return "Статус низкоуровневой очистки ячеек памяти (Sanitize)."
+        if "selftest" in nl or "фонового" in nl:
+            return "Результат последнего аппаратного теста накопителя (Self-test)."
+        return "Параметр аппаратной самодиагностики диска или системной телеметрии ядра Linux."
 
 
 class SmoothSwitch(Gtk.EventBox):
@@ -138,11 +132,11 @@ class SmoothSwitch(Gtk.EventBox):
         w, h = alloc.width, alloc.height
         r = h / 2.0
 
-        # Background color blend (off: calm slate #232832, on: vibrant blue #0066ff)
+        # Background color blend (off: calm slate #38383e, on: vibrant blue #1f9ede)
         t = self.anim_val
-        cr_r = (35.0 / 255.0) + ((0.0 - 35.0 / 255.0) * t)
-        cr_g = (40.0 / 255.0) + ((102.0 / 255.0 - 40.0 / 255.0) * t)
-        cr_b = (50.0 / 255.0) + ((255.0 / 255.0 - 50.0 / 255.0) * t)
+        cr_r = (56.0 / 255.0) + ((31.0 / 255.0 - 56.0 / 255.0) * t)
+        cr_g = (56.0 / 255.0) + ((158.0 / 255.0 - 56.0 / 255.0) * t)
+        cr_b = (62.0 / 255.0) + ((222.0 / 255.0 - 62.0 / 255.0) * t)
         cr.set_source_rgb(cr_r, cr_g, cr_b)
 
         # Rounded pill track
@@ -153,9 +147,9 @@ class SmoothSwitch(Gtk.EventBox):
         cr.fill_preserve()
 
         # Track border
-        border_r = 0.22 + (0.0 - 0.22) * t
-        border_g = 0.26 + (0.52 - 0.26) * t
-        border_b = 0.32 + (1.00 - 0.32) * t
+        border_r = (74.0 / 255.0) + ((56.0 / 255.0 - 74.0 / 255.0) * t)
+        border_g = (74.0 / 255.0) + ((189.0 / 255.0 - 74.0 / 255.0) * t)
+        border_b = (82.0 / 255.0) + ((248.0 / 255.0 - 82.0 / 255.0) * t)
         cr.set_source_rgb(border_r, border_g, border_b)
         cr.set_line_width(1.0)
         cr.stroke()
@@ -234,9 +228,9 @@ class SmartTab(Gtk.Box):
         head_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         head_icon = get_svg_image("disk", size=18, color="#1f9ede")
         head_box.pack_start(head_icon, False, False, 0)
-        header_lbl = Gtk.Label(label="Физические накопители", xalign=0)
-        header_lbl.get_style_context().add_class("section-title")
-        head_box.pack_start(header_lbl, True, True, 0)
+        self.header_lbl = Gtk.Label(label=t("drives_title"), xalign=0)
+        self.header_lbl.get_style_context().add_class("section-title")
+        head_box.pack_start(self.header_lbl, True, True, 0)
         left_box.pack_start(head_box, False, False, 0)
 
         # Drives TreeView with Icons
@@ -248,29 +242,31 @@ class SmartTab(Gtk.Box):
         self.dev_tree.connect("button-press-event", self._on_drive_button_press)
 
         # Drive Icon + Name Column
-        col_dev = Gtk.TreeViewColumn("Накопитель")
-        col_dev.set_expand(True)
+        self.col_dev = Gtk.TreeViewColumn(t("drive_col_name"))
+        self.col_dev.set_expand(True)
 
         cell_icon = Gtk.CellRendererPixbuf()
         cell_icon.set_padding(4, 4)
-        col_dev.pack_start(cell_icon, False)
-        col_dev.add_attribute(cell_icon, "pixbuf", 0)
+        self.col_dev.pack_start(cell_icon, False)
+        self.col_dev.add_attribute(cell_icon, "pixbuf", 0)
 
         cell_dev = Gtk.CellRendererText()
         cell_dev.set_property("ellipsize", 3)
         cell_dev.set_padding(4, 6)
-        col_dev.pack_start(cell_dev, True)
-        col_dev.add_attribute(cell_dev, "text", 1)
-        self.dev_tree.append_column(col_dev)
+        self.col_dev.pack_start(cell_dev, True)
+        self.col_dev.add_attribute(cell_dev, "text", 1)
+        self.dev_tree.append_column(self.col_dev)
 
         # Size Column
-        col_size = Gtk.TreeViewColumn("Ёмкость")
+        self.col_size = Gtk.TreeViewColumn(t("drive_col_size"))
         cell_size = Gtk.CellRendererText()
         cell_size.set_property("xalign", 1.0)
         cell_size.set_padding(4, 6)
-        col_size.pack_start(cell_size, False)
-        col_size.add_attribute(cell_size, "text", 2)
-        self.dev_tree.append_column(col_size)
+        self.col_size.pack_start(cell_size, False)
+        self.col_size.add_attribute(cell_size, "text", 2)
+        self.col_size.set_min_width(75)
+        self.col_size.set_max_width(90)
+        self.dev_tree.append_column(self.col_size)
 
         scroll_left = Gtk.ScrolledWindow()
         scroll_left.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
@@ -281,18 +277,19 @@ class SmartTab(Gtk.Box):
         box_controls = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
 
         box_switch = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        lbl_switch = Gtk.Label(label="Режим мастера (Advanced):", xalign=0)
-        lbl_switch.get_style_context().add_class("metric-title")
+        self.lbl_switch = Gtk.Label(label=t("adv_mode"), xalign=0)
+        self.lbl_switch.get_style_context().add_class("metric-title")
         self.switch_adv = SmoothSwitch(active=False, on_toggle=self._on_advanced_toggled)
 
-        box_switch.pack_start(lbl_switch, True, True, 0)
+        box_switch.pack_start(self.lbl_switch, True, True, 0)
         box_switch.pack_start(self.switch_adv, False, False, 0)
         box_controls.pack_start(box_switch, False, False, 0)
 
         btn_refresh = Gtk.Button()
         ref_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         ref_box.pack_start(get_svg_image("refresh", size=15, color="#cbd5e1"), False, False, 0)
-        ref_box.pack_start(Gtk.Label(label="Обновить список дисков"), False, False, 0)
+        self.lbl_refresh = Gtk.Label(label=t("btn_refresh_drives"))
+        ref_box.pack_start(self.lbl_refresh, False, False, 0)
         btn_refresh.add(ref_box)
         btn_refresh.connect("clicked", lambda b: self.refresh())
         box_controls.pack_start(btn_refresh, False, False, 0)
@@ -335,23 +332,23 @@ class SmartTab(Gtk.Box):
             return box, box, lbl_val
 
         # 1. Health Cell
-        self.frame_health, self.card_health, self.lbl_health = _make_metric_cell("check_circle", "#73D216", "Состояние накопителя")
-        self.lbl_health.set_text("Хорошо (100%)")
+        self.frame_health, self.card_health, self.lbl_health = _make_metric_cell("check_circle", "#73D216", t("card_health"))
+        self.lbl_health.set_text(f"{t('health_good')} (100%)")
         self.lbl_health.get_style_context().add_class("badge-good")
         grid_cards.attach(self.frame_health, 0, 0, 1, 1)
 
         # 2. Temp Cell
-        self.frame_temp, self.card_temp, self.lbl_temp = _make_metric_cell("thermometer", "#F27835", "Температура")
+        self.frame_temp, self.card_temp, self.lbl_temp = _make_metric_cell("thermometer", "#F27835", t("card_temp"))
         self.lbl_temp.set_text("—")
         grid_cards.attach(self.frame_temp, 1, 0, 1, 1)
 
         # 3. Interface / Type Cell
-        self.frame_type, self.card_type, self.lbl_type = _make_metric_cell("cpu", "#1f9ede", "Интерфейс")
+        self.frame_type, self.card_type, self.lbl_type = _make_metric_cell("cpu", "#1f9ede", t("card_interface"))
         self.lbl_type.set_text("—")
         grid_cards.attach(self.frame_type, 2, 0, 1, 1)
 
         # 4. Hours Cell
-        self.frame_sn, self.card_sn, self.lbl_sn = _make_metric_cell("clock", "#a855f7", "Время работы / S/N")
+        self.frame_sn, self.card_sn, self.lbl_sn = _make_metric_cell("clock", "#a855f7", t("card_uptime"))
         self.lbl_sn.set_text("—")
         grid_cards.attach(self.frame_sn, 3, 0, 1, 1)
 
@@ -360,9 +357,9 @@ class SmartTab(Gtk.Box):
         # S.M.A.R.T. Attributes Table
         lbl_attr_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         lbl_attr_box.pack_start(get_svg_image("pulse", size=16, color="#1f9ede"), False, False, 0)
-        lbl_attr = Gtk.Label(label="Параметры надёжности и S.M.A.R.T.", xalign=0)
-        lbl_attr.get_style_context().add_class("section-title")
-        lbl_attr_box.pack_start(lbl_attr, True, True, 0)
+        self.lbl_attr = Gtk.Label(label=t("smart_table_title"), xalign=0)
+        self.lbl_attr.get_style_context().add_class("section-title")
+        lbl_attr_box.pack_start(self.lbl_attr, True, True, 0)
 
         # Loading spinner indicator when querying drive data
         self.smart_spinner = Gtk.Spinner()
@@ -375,12 +372,12 @@ class SmartTab(Gtk.Box):
         self.smart_tree.connect("button-press-event", self._on_smart_tree_button_press)
 
         cols = [
-            ("№", 0, 48, False, 0.0),
-            ("Параметр самодиагностики / Телеметрия", 1, 320, True, 0.0),
-            ("Текущее", 2, 95, False, 0.0),
-            ("Худшее", 3, 80, False, 0.0),
-            ("Порог", 4, 80, False, 0.0),
-            ("Значение / Статус", 5, 200, True, 0.0),
+            (t("smart_col_num"), 0, 48, False, 0.0),
+            (t("smart_col_param"), 1, 320, True, 0.0),
+            (t("smart_col_curr"), 2, 95, False, 0.0),
+            (t("smart_col_worst"), 3, 80, False, 0.0),
+            (t("smart_col_thresh"), 4, 80, False, 0.0),
+            (t("smart_col_val"), 5, 200, True, 0.0),
         ]
         for title, idx, width, expand, xalign in cols:
             renderer = Gtk.CellRendererText()
@@ -444,11 +441,13 @@ class SmartTab(Gtk.Box):
     def _show_drive_context_menu(self, dev_path: str, dev_model: str, dev_size: str, event):
         menu = Gtk.Menu()
 
-        item_refresh = Gtk.MenuItem(label="Обновить телеметрию SMART")
+        ref_lbl = "Обновить телеметрию SMART" if get_current_lang() == "ru" else "Refresh S.M.A.R.T. Telemetry"
+        item_refresh = Gtk.MenuItem(label=ref_lbl)
         item_refresh.connect("activate", lambda m: self._update_current_smart())
         menu.append(item_refresh)
 
-        item_copy = Gtk.MenuItem(label="Скопировать системный путь диска")
+        copy_lbl = "Скопировать системный путь диска" if get_current_lang() == "ru" else "Copy Device Node Path"
+        item_copy = Gtk.MenuItem(label=copy_lbl)
         def _copy_path(m):
             clip = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
             clip.set_text(dev_path, -1)
@@ -457,7 +456,8 @@ class SmartTab(Gtk.Box):
 
         menu.append(Gtk.SeparatorMenuItem())
 
-        item_props = Gtk.MenuItem(label="Подробные сведения об устройстве")
+        prop_lbl = "Подробные сведения об устройстве" if get_current_lang() == "ru" else "Device Hardware Properties"
+        item_props = Gtk.MenuItem(label=prop_lbl)
         item_props.connect("activate", lambda m: self._show_drive_properties(dev_path, dev_model, dev_size))
         menu.append(item_props)
 
@@ -482,7 +482,7 @@ class SmartTab(Gtk.Box):
                 menu = Gtk.Menu()
 
                 # 1. Parameter Info
-                item_info = Gtk.MenuItem(label="ℹ️ Справка и пояснение по параметру...")
+                item_info = Gtk.MenuItem(label="Справка по параметру" if get_current_lang() == "ru" else "Parameter Documentation")
                 item_info.connect("activate", lambda w: self._show_attribute_info(num, name, cur, worst, thresh, val))
                 menu.append(item_info)
 
@@ -490,20 +490,23 @@ class SmartTab(Gtk.Box):
 
                 # 2. Copy Value
                 display_val = val if len(val) < 25 else (val[:22] + "...")
-                item_copy_val = Gtk.MenuItem(label=f"📋 Копировать значение ({display_val})")
+                copy_lbl = f"Копировать значение ({display_val})" if get_current_lang() == "ru" else f"Copy Value ({display_val})"
+                item_copy_val = Gtk.MenuItem(label=copy_lbl)
                 item_copy_val.connect("activate", lambda w: self._copy_to_clipboard(val))
                 menu.append(item_copy_val)
 
                 # 3. Copy Row
-                item_copy_row = Gtk.MenuItem(label="📋 Копировать всю строку")
-                row_str = f"№{num} | {name} | Текущее: {cur} | Худшее: {worst} | Порог: {thresh} | Значение: {val}"
+                copy_row_lbl = "Копировать строку целиком" if get_current_lang() == "ru" else "Copy Entire Row"
+                item_copy_row = Gtk.MenuItem(label=copy_row_lbl)
+                row_str = f"№{num} | {name} | {cur} | {worst} | {thresh} | {val}"
                 item_copy_row.connect("activate", lambda w: self._copy_to_clipboard(row_str))
                 menu.append(item_copy_row)
 
                 menu.append(Gtk.SeparatorMenuItem())
 
                 # 4. Refresh
-                item_refresh = Gtk.MenuItem(label="🔄 Обновить показатели S.M.A.R.T.")
+                refresh_lbl = "Обновить показатели S.M.A.R.T." if get_current_lang() == "ru" else "Refresh S.M.A.R.T. Telemetry"
+                item_refresh = Gtk.MenuItem(label=refresh_lbl)
                 item_refresh.connect("activate", lambda w: self._update_current_smart())
                 menu.append(item_refresh)
 
@@ -519,11 +522,11 @@ class SmartTab(Gtk.Box):
     def _show_attribute_info(self, num: str, name: str, cur: str, worst: str, thresh: str, val: str):
         desc = get_attribute_description(name, num)
         dialog = Gtk.Dialog(
-            title=f"Справка: {name}",
+            title=f"Info: {name}" if get_current_lang() == "en" else f"Справка: {name}",
             parent=self.get_toplevel(),
             flags=Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT
         )
-        dialog.add_button("Закрыть", Gtk.ResponseType.CLOSE)
+        dialog.add_button("Close" if get_current_lang() == "en" else "Закрыть", Gtk.ResponseType.CLOSE)
         dialog.set_default_size(520, 240)
 
         box = dialog.get_content_area()
@@ -551,17 +554,21 @@ class SmartTab(Gtk.Box):
             grid.attach(lbl_t, 0, row, 1, 1)
             grid.attach(lbl_v, 1, row, 1, 1)
 
-        _add_stat(0, "Значение / Статус:", val)
-        _add_stat(1, "Текущий показатель:", cur)
-        _add_stat(2, "Худший показатель:", worst)
-        _add_stat(3, "Критический порог:", thresh)
+        is_en = get_current_lang() == "en"
+        _add_stat(0, "Raw Value / Status:" if is_en else "Значение / Статус:", val)
+        _add_stat(1, "Current Value:" if is_en else "Текущий показатель:", cur)
+        _add_stat(2, "Worst Value:" if is_en else "Худший показатель:", worst)
+        _add_stat(3, "Critical Threshold:" if is_en else "Критический порог:", thresh)
         box.pack_start(grid, False, False, 0)
 
         sep = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
         box.pack_start(sep, False, False, 4)
 
         # Description
-        lbl_desc_title = Gtk.Label(label="📌 Описание и назначение параметра:", xalign=0)
+        lbl_desc_title = Gtk.Label(
+            label="Attribute Description & Purpose:" if is_en else "Описание и назначение параметра:",
+            xalign=0
+        )
         lbl_desc_title.get_style_context().add_class("section-title")
         box.pack_start(lbl_desc_title, False, False, 0)
 
@@ -576,8 +583,10 @@ class SmartTab(Gtk.Box):
 
     def _show_drive_properties(self, dev_path: str, dev_model: str, dev_size: str):
         dev_info = next((d for d in self.devices if d["path"] == dev_path), {})
+        is_en = get_current_lang() == "en"
         dialog = Gtk.Dialog(
-            title=f"Параметры накопителя: {dev_model}",
+            title=f"Drive Hardware Properties: {dev_model}" if is_en else f"Параметры накопителя: {dev_model}",
+            parent=self.get_toplevel(),
             flags=Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT
         )
         dialog.set_default_size(480, 320)
@@ -592,14 +601,17 @@ class SmartTab(Gtk.Box):
         grid.set_column_spacing(14)
         grid.set_row_spacing(8)
 
+        media_desc = ("Solid State Drive (SSD)" if dev_info.get("is_ssd") else "Hard Disk Drive (HDD)") if is_en else \
+                     ("Твердотельный накопитель (SSD)" if dev_info.get("is_ssd") else "Жёсткий диск (HDD)")
+
         props = [
-            ("Модель:", dev_model),
-            ("Системный узел:", dev_path),
-            ("Ёмкость:", dev_size),
-            ("Серийный номер:", dev_info.get("serial", "Не указан")),
-            ("Тип носителя:", "Твердотельный накопитель (SSD)" if dev_info.get("is_ssd") else "Жёсткий диск (HDD)"),
-            ("Интерфейс шины:", dev_info.get("tran", "NVMe / PCIe").upper()),
-            ("Файловая система:", dev_info.get("fstype", "ext4 / btrfs")),
+            ("Model:" if is_en else "Модель:", dev_model),
+            ("Device Node:" if is_en else "Системный узел:", dev_path),
+            ("Capacity:" if is_en else "Ёмкость:", dev_size),
+            ("Serial Number:" if is_en else "Серийный номер:", dev_info.get("serial", "N/A" if is_en else "Не указан")),
+            ("Media Type:" if is_en else "Тип носителя:", media_desc),
+            ("Bus Transport:" if is_en else "Интерфейс шины:", dev_info.get("tran", "NVMe / PCIe").upper()),
+            ("File System:" if is_en else "Файловая система:", dev_info.get("fstype", "ext4 / btrfs")),
         ]
 
         for i, (k, v) in enumerate(props):
@@ -612,7 +624,7 @@ class SmartTab(Gtk.Box):
             grid.attach(lbl_v, 1, i, 1, 1)
 
         box.pack_start(grid, True, True, 0)
-        dialog.add_button("Закрыть", Gtk.ResponseType.CLOSE)
+        dialog.add_button("Close" if is_en else "Закрыть", Gtk.ResponseType.CLOSE)
         dialog.connect("response", lambda d, r: d.destroy())
         dialog.show_all()
 

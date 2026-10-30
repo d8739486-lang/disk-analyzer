@@ -7,6 +7,7 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GLib
 from core.disk_info import get_block_devices
 from core.benchmark import DiskBenchmark
+from core.i18n import t, get_current_lang
 from gui.ui_utils import get_svg_image, get_svg_pixbuf
 from gui.gauge_widget import SpeedGauge
 
@@ -80,16 +81,16 @@ class BenchmarkTab(Gtk.Box):
 
         ctrl_box.pack_start(get_svg_image("speedometer", size=18, color="#ffffff"), False, False, 0)
 
-        lbl_target = Gtk.Label(label="Тестируемый раздел:")
-        lbl_target.get_style_context().add_class("section-title")
-        ctrl_box.pack_start(lbl_target, False, False, 0)
+        self.lbl_target = Gtk.Label(label=t("bench_target"))
+        self.lbl_target.get_style_context().add_class("section-title")
+        ctrl_box.pack_start(self.lbl_target, False, False, 0)
 
         self.combo_target = Gtk.ComboBoxText()
         self.combo_target.set_size_request(340, -1)
         ctrl_box.pack_start(self.combo_target, False, False, 0)
 
-        lbl_size = Gtk.Label(label="Объем файла теста:")
-        ctrl_box.pack_start(lbl_size, False, False, 0)
+        self.lbl_size = Gtk.Label(label=t("bench_size"))
+        ctrl_box.pack_start(self.lbl_size, False, False, 0)
 
         self.selected_size_mb = "1024"
         self.size_btn = Gtk.MenuButton()
@@ -97,7 +98,7 @@ class BenchmarkTab(Gtk.Box):
         self.size_btn.set_size_request(130, -1)
 
         btn_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-        self.lbl_selected_size = Gtk.Label(label="1 ГБ", xalign=0.5)
+        self.lbl_selected_size = Gtk.Label(label="1 GB" if get_current_lang() == "en" else "1 ГБ", xalign=0.5)
         btn_box.pack_start(self.lbl_selected_size, True, True, 0)
         self.size_btn.add(btn_box)
 
@@ -113,16 +114,19 @@ class BenchmarkTab(Gtk.Box):
         pop_box.set_margin_start(6)
         pop_box.set_margin_end(6)
 
+        is_en = get_current_lang() == "en"
+        mb_str = "MB" if is_en else "МБ"
+        gb_str = "GB" if is_en else "ГБ"
         self.size_options = [
-            ("64",    "64 МБ"),
-            ("128",   "128 МБ"),
-            ("256",   "256 МБ"),
-            ("512",   "512 МБ"),
-            ("1024",  "1 ГБ"),
-            ("2048",  "2 ГБ"),
-            ("4096",  "4 ГБ"),
-            ("8192",  "8 ГБ"),
-            ("16384", "16 ГБ"),
+            ("64",    f"64 {mb_str}"),
+            ("128",   f"128 {mb_str}"),
+            ("256",   f"256 {mb_str}"),
+            ("512",   f"512 {mb_str}"),
+            ("1024",  f"1 {gb_str}"),
+            ("2048",  f"2 {gb_str}"),
+            ("4096",  f"4 {gb_str}"),
+            ("8192",  f"8 {gb_str}"),
+            ("16384", f"16 {gb_str}"),
         ]
         self.size_item_buttons = {}
 
@@ -145,7 +149,7 @@ class BenchmarkTab(Gtk.Box):
         self.btn_action.get_style_context().add_class("primary-btn")
         self.action_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         self.action_icon = get_svg_image("play", size=14, color="#ffffff")
-        self.action_lbl = Gtk.Label(label="Запустить тест скорости")
+        self.action_lbl = Gtk.Label(label=t("btn_start_bench"))
         self.action_box.pack_start(self.action_icon, False, False, 0)
         self.action_box.pack_start(self.action_lbl, False, False, 0)
         self.btn_action.add(self.action_box)
@@ -204,32 +208,32 @@ class BenchmarkTab(Gtk.Box):
 
         # Card 1: Sequential Write
         self.card_seq_write, self.val_seq_write, self.unit_seq_write, self.spin_seq_write, self.prog_seq_write = self._create_card(
-            title="Запись больших файлов (SEQ 1M)",
-            desc="Копирование фильмов, игр, установщиков и тяжелых архивов",
+            title=t("bench_seq_write"),
+            desc=t("bench_seq_write_sub"),
             icon_name="upload", is_read=False
         )
         grid_cards.attach(self.card_seq_write, 1, 0, 1, 1)
 
         # Card 2: Sequential Read
         self.card_seq_read, self.val_seq_read, self.unit_seq_read, self.spin_seq_read, self.prog_seq_read = self._create_card(
-            title="Чтение больших файлов (SEQ 1M)",
-            desc="Запуск игр, загрузка видеомонтажа и открытие больших баз данных",
+            title=t("bench_seq_read"),
+            desc=t("bench_seq_read_sub"),
             icon_name="download", is_read=True
         )
         grid_cards.attach(self.card_seq_read, 0, 0, 1, 1)
 
         # Card 3: Random Write
         self.card_rnd_write, self.val_rnd_write, self.unit_rnd_write, self.spin_rnd_write, self.prog_rnd_write = self._create_card(
-            title="Случайная запись мелких блоков (4K RND)",
-            desc="Запись логов, кэша браузера, фоновых сервисов и обновлений ОС",
+            title=t("bench_rnd_write"),
+            desc=t("bench_rnd_write_sub"),
             icon_name="upload", is_read=False
         )
         grid_cards.attach(self.card_rnd_write, 1, 1, 1, 1)
 
         # Card 4: Random Read
         self.card_rnd_read, self.val_rnd_read, self.unit_rnd_read, self.spin_rnd_read, self.prog_rnd_read = self._create_card(
-            title="Случайный отклик системы (4K RND)",
-            desc="Главный параметр отзывчивости рабочего стола, меню и открытия программ",
+            title=t("bench_rnd_read"),
+            desc=t("bench_rnd_read_sub"),
             icon_name="download", is_read=True
         )
         grid_cards.attach(self.card_rnd_read, 0, 1, 1, 1)

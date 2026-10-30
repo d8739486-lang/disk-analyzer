@@ -8,6 +8,7 @@ gi.require_version('GdkPixbuf', '2.0')
 from gi.repository import Gtk, GdkPixbuf, GLib
 from core.disk_info import get_block_devices, format_bytes, get_mount_usage
 from core.scanner import DirectoryScanner
+from core.i18n import t, get_current_lang
 from gui.ui_utils import get_svg_image, get_svg_pixbuf, get_file_system_icon
 
 
@@ -35,7 +36,8 @@ class UsageTab(Gtk.Box):
         self.btn_back = Gtk.Button()
         b_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
         b_box.pack_start(get_svg_image("arrow_left", size=14, color="#ffffff"), False, False, 0)
-        b_box.pack_start(Gtk.Label(label="Назад"), False, False, 0)
+        self.lbl_back = Gtk.Label(label=t("btn_back"))
+        b_box.pack_start(self.lbl_back, False, False, 0)
         self.btn_back.add(b_box)
         self.btn_back.set_sensitive(False)
         self.btn_back.connect("clicked", self._on_back_clicked)
@@ -45,35 +47,36 @@ class UsageTab(Gtk.Box):
         self.btn_up = Gtk.Button()
         u_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
         u_box.pack_start(get_svg_image("arrow_up", size=14, color="#ffffff"), False, False, 0)
-        u_box.pack_start(Gtk.Label(label="Вверх"), False, False, 0)
+        self.lbl_up = Gtk.Label(label=t("btn_up"))
+        u_box.pack_start(self.lbl_up, False, False, 0)
         self.btn_up.add(u_box)
         self.btn_up.connect("clicked", self._on_up_clicked)
         top_box.pack_start(self.btn_up, False, False, 0)
 
-        lbl_part = Gtk.Label(label="Раздел:")
-        lbl_part.get_style_context().add_class("section-title")
-        top_box.pack_start(lbl_part, False, False, 0)
+        self.lbl_part = Gtk.Label(label=t("partition"))
+        self.lbl_part.get_style_context().add_class("section-title")
+        top_box.pack_start(self.lbl_part, False, False, 0)
 
         self.combo_mounts = Gtk.ComboBoxText()
         self.combo_mounts.set_size_request(240, -1)
         self.combo_mounts.connect("changed", self._on_mount_changed)
         top_box.pack_start(self.combo_mounts, False, False, 0)
 
-        lbl_loc = Gtk.Label(label="Путь:")
-        lbl_loc.get_style_context().add_class("section-title")
-        top_box.pack_start(lbl_loc, False, False, 0)
+        self.lbl_loc = Gtk.Label(label=t("path"))
+        self.lbl_loc.get_style_context().add_class("section-title")
+        top_box.pack_start(self.lbl_loc, False, False, 0)
 
         self.entry_path = Gtk.Entry()
         self.entry_path.set_text(self.current_path)
         self.entry_path.connect("activate", self._on_path_entered)
         top_box.pack_start(self.entry_path, True, True, 0)
 
-        # Action button (Starts as "Глубокий анализ", transforms to "Остановить" in-place)
+        # Action button
         self.btn_scan = Gtk.Button()
         self.btn_scan.get_style_context().add_class("primary-btn")
         self.scan_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         self.scan_icon = get_svg_image("pulse", size=14, color="#ffffff")
-        self.scan_lbl = Gtk.Label(label="Глубокий анализ")
+        self.scan_lbl = Gtk.Label(label=t("btn_scan"))
         self.scan_box.pack_start(self.scan_icon, False, False, 0)
         self.scan_box.pack_start(self.scan_lbl, False, False, 0)
         self.btn_scan.add(self.scan_box)
@@ -86,7 +89,7 @@ class UsageTab(Gtk.Box):
         self.summary_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
 
         header_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=14)
-        lbl_info_title = Gtk.Label(label="Занятость накопителя", xalign=0)
+        self.lbl_info_title = Gtk.Label(label=t("usage_title"), xalign=0)
         lbl_info_title.get_style_context().add_class("section-title")
         header_row.pack_start(lbl_info_title, False, False, 0)
 
@@ -135,14 +138,15 @@ class UsageTab(Gtk.Box):
         table_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
 
         head_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        lbl_tree_head = Gtk.Label(label="Проводник накопителя (Древовидная структура)", xalign=0)
-        lbl_tree_head.get_style_context().add_class("section-title")
-        head_row.pack_start(lbl_tree_head, True, True, 0)
+        self.lbl_tree_head = Gtk.Label(label=t("tree_title"), xalign=0)
+        self.lbl_tree_head.get_style_context().add_class("section-title")
+        head_row.pack_start(self.lbl_tree_head, True, True, 0)
 
         btn_open_ext = Gtk.Button()
         o_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
         o_box.pack_start(get_svg_image("disk", size=14, color="#cbd5e1"), False, False, 0)
-        o_box.pack_start(Gtk.Label(label="Открыть в системном менеджере"), False, False, 0)
+        self.lbl_open_ext = Gtk.Label(label=t("btn_open_folder"))
+        o_box.pack_start(self.lbl_open_ext, False, False, 0)
         btn_open_ext.add(o_box)
         btn_open_ext.connect("clicked", self._on_open_in_file_manager)
         head_row.pack_start(btn_open_ext, False, False, 0)
@@ -159,27 +163,27 @@ class UsageTab(Gtk.Box):
         self.tree_view.connect("button-press-event", self._on_tree_button_press)
 
         # Column 1: Expandable Name + Real System Icon
-        col_name = Gtk.TreeViewColumn("Имя элемента")
-        col_name.set_expand(True)
-        col_name.set_min_width(320)
+        self.col_name = Gtk.TreeViewColumn(t("col_name"))
+        self.col_name.set_expand(True)
+        self.col_name.set_min_width(320)
 
         cell_icon = Gtk.CellRendererPixbuf()
         cell_icon.set_padding(4, 4)
-        col_name.pack_start(cell_icon, False)
-        col_name.add_attribute(cell_icon, "pixbuf", 0)
+        self.col_name.pack_start(cell_icon, False)
+        self.col_name.add_attribute(cell_icon, "pixbuf", 0)
 
         cell_name = Gtk.CellRendererText()
         cell_name.set_padding(4, 6)
-        col_name.pack_start(cell_name, True)
-        col_name.add_attribute(cell_name, "text", 1)
-        self.tree_view.append_column(col_name)
+        self.col_name.pack_start(cell_name, True)
+        self.col_name.add_attribute(cell_name, "text", 1)
+        self.tree_view.append_column(self.col_name)
 
         # Other Columns
         cols = [
-            ("Размер", 2, 110, False, 1.0),
-            ("Тип", 3, 110, False, 0.0),
-            ("Элементов", 4, 95, False, 1.0),
-            ("Полный путь", 5, 280, True, 0.0),
+            (t("col_size"), 2, 110, False, 1.0),
+            (t("col_type"), 3, 110, False, 0.0),
+            (t("col_items"), 4, 95, False, 1.0),
+            (t("col_path"), 5, 280, True, 0.0),
         ]
         for title, idx, width, expand, xalign in cols:
             renderer = Gtk.CellRendererText()

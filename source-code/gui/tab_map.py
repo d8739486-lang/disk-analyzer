@@ -9,6 +9,7 @@ from gi.repository import Gtk, Gdk, GLib
 from core.disk_info import get_block_devices, format_bytes
 from core.scanner import DirectoryScanner
 from core.surface_scanner import SurfaceScanner
+from core.i18n import t, get_current_lang
 from gui.treemap_widget import TreemapWidget
 from gui.sector_grid_widget import SectorGridWidget
 from gui.ui_utils import get_svg_image, get_svg_pixbuf
@@ -40,7 +41,8 @@ class MapTab(Gtk.Box):
         self.btn_mode_space = Gtk.Button()
         b_sp_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         b_sp_box.pack_start(get_svg_image("grid", size=14, color="#ffffff"), False, False, 0)
-        b_sp_box.pack_start(Gtk.Label(label="Карта занятого места"), False, False, 0)
+        self.lbl_mode_space = Gtk.Label(label=t("mode_treemap"))
+        b_sp_box.pack_start(self.lbl_mode_space, False, False, 0)
         self.btn_mode_space.add(b_sp_box)
         self.btn_mode_space.get_style_context().add_class("primary-btn")
         self.btn_mode_space.connect("clicked", lambda b: self._switch_mode("space"))
@@ -49,7 +51,8 @@ class MapTab(Gtk.Box):
         self.btn_mode_sectors = Gtk.Button()
         b_sec_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         b_sec_box.pack_start(get_svg_image("shield_check", size=14, color="#ffffff"), False, False, 0)
-        b_sec_box.pack_start(Gtk.Label(label="Проверка секторов (Блоки)"), False, False, 0)
+        self.lbl_mode_sectors = Gtk.Label(label=t("mode_surface"))
+        b_sec_box.pack_start(self.lbl_mode_sectors, False, False, 0)
         self.btn_mode_sectors.add(b_sec_box)
         self.btn_mode_sectors.connect("clicked", lambda b: self._switch_mode("sectors"))
         mode_box.pack_start(self.btn_mode_sectors, False, False, 0)
@@ -110,20 +113,20 @@ class MapTab(Gtk.Box):
         legend_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         legend_box.set_size_request(220, -1)
         
-        lbl_legend_title = Gtk.Label(label="Статус блоков", xalign=0)
+        lbl_legend_title = Gtk.Label(label=t("status_blocks"), xalign=0)
         lbl_legend_title.get_style_context().add_class("section-title")
         legend_box.pack_start(lbl_legend_title, False, False, 0)
 
-        self.lbl_stat_fast = self._create_legend_row(legend_box, "#34d399", "< 5 мс (Отлично):", "0")
-        self.lbl_stat_normal = self._create_legend_row(legend_box, "#38bdf8", "< 25 мс (Нормально):", "0")
-        self.lbl_stat_slow = self._create_legend_row(legend_box, "#facc15", "< 100 мс (Внимание):", "0")
-        self.lbl_stat_vslow = self._create_legend_row(legend_box, "#fb923c", "< 500 мс (Медленно):", "0")
-        self.lbl_stat_bad = self._create_legend_row(legend_box, "#ef4444", "Ошибки / Бэды:", "0")
+        self.lbl_stat_fast = self._create_legend_row(legend_box, "#34d399", t("sec_fast"), "0")
+        self.lbl_stat_normal = self._create_legend_row(legend_box, "#38bdf8", t("sec_norm"), "0")
+        self.lbl_stat_slow = self._create_legend_row(legend_box, "#facc15", t("sec_slow"), "0")
+        self.lbl_stat_vslow = self._create_legend_row(legend_box, "#fb923c", t("sec_vslow"), "0")
+        self.lbl_stat_bad = self._create_legend_row(legend_box, "#ef4444", t("sec_bad"), "0")
 
         lbl_sep_leg = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
         legend_box.pack_start(lbl_sep_leg, False, False, 4)
 
-        self.lbl_sector_progress = Gtk.Label(label="Проверено: 0 / 1200", xalign=0)
+        self.lbl_sector_progress = Gtk.Label(label=f"{t('tested')} 0 / 1200", xalign=0)
         self.lbl_sector_progress.get_style_context().add_class("metric-title")
         legend_box.pack_start(self.lbl_sector_progress, False, False, 0)
 

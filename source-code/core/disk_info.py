@@ -3,21 +3,23 @@ import json
 import os
 import subprocess
 from typing import Dict, List, Any
+from core.i18n import t, get_current_lang
 
 
 def format_bytes(size_bytes: int) -> str:
     """Format bytes to human readable string (IEC units)."""
     if size_bytes < 0:
         return "0 B"
-    units = ["Б", "КБ", "МБ", "ГБ", "ТБ", "ПБ"]
+    is_en = get_current_lang() == "en"
+    units = ["B", "KB", "MB", "GB", "TB", "PB"] if is_en else ["Б", "КБ", "МБ", "ГБ", "ТБ", "ПБ"]
     val = float(size_bytes)
     for unit in units:
         if val < 1024.0 or unit == units[-1]:
-            if unit in ("Б", "КБ"):
+            if unit in ("B", "KB", "Б", "КБ"):
                 return f"{int(val)} {unit}"
             return f"{val:.1f} {unit}"
         val /= 1024.0
-    return f"{val:.1f} ТБ"
+    return f"{val:.1f} {'TB' if is_en else 'ТБ'}"
 
 
 def get_mount_usage(mountpoint: str) -> Dict[str, Any]:
@@ -79,9 +81,9 @@ def get_block_devices() -> List[Dict[str, Any]]:
         # Friendly drive label
         model_name = (dev.get("model") or "").strip()
         if not model_name:
-            model_name = "Основной накопитель (NVMe)" if "nvme" in tran else "Системный накопитель"
+            model_name = t("main_nvme") if "nvme" in tran else t("sys_drive")
 
-        media_name = "NVMe SSD (Скоростной)" if tran == "nvme" else ("SSD диск" if is_ssd else "HDD диск")
+        media_name = t("nvme_fast") if tran == "nvme" else (t("sata_ssd") if is_ssd else t("hdd_disk"))
 
         item = {
             "name": dev.get("name", ""),
@@ -105,20 +107,21 @@ def get_block_devices() -> List[Dict[str, Any]]:
             label = ch.get("label") or ""
             usage = get_mount_usage(mp) if mp else None
 
-            # Friendly partition name for users
+            is_en = get_current_lang() == "en"
             part_name = ch.get("name", "")
             if mp == "/":
-                friendly_desc = "Основной системный раздел (Корень /)"
+                friendly_desc = "Primary System Root (/)" if is_en else "Основной системный раздел (Корень /)"
             elif mp == "/home":
-                friendly_desc = "Пользовательские данные (/home)"
+                friendly_desc = "User Home Directory (/home)" if is_en else "Пользовательские данные (/home)"
             elif mp == "/boot/efi":
-                friendly_desc = "Загрузчик EFI"
+                friendly_desc = "EFI Bootloader" if is_en else "Загрузчик EFI"
             elif label:
-                friendly_desc = f"{label} ({mp or 'Не смонтирован'})"
+                unm = "Not mounted" if is_en else "Не смонтирован"
+                friendly_desc = f"{label} ({mp or unm})"
             elif mp:
-                friendly_desc = f"Раздел {part_name} ({mp})"
+                friendly_desc = f"{'Partition' if is_en else 'Раздел'} {part_name} ({mp})"
             else:
-                friendly_desc = f"Раздел {part_name}"
+                friendly_desc = f"{'Partition' if is_en else 'Раздел'} {part_name}"
 
             part_info = {
                 "name": part_name,
